@@ -16,7 +16,7 @@ const DJs = [
 ]
 
 // ALTERA ESTE LINK DEPOIS PARA O TEU DOMÍNIO REAL
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = 'https://purificacaosessions.vercel.app'
 
 const outputDir = path.join(__dirname, 'public', 'qrs')
 
