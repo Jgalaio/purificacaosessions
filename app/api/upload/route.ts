@@ -2,18 +2,32 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 
 export async function POST(req: Request) {
-  const formData = await req.formData()
-  const file = formData.get('file') as File
+  try {
+    const formData = await req.formData()
+    const file = formData.get('file') as File
 
-  const fileName = `${Date.now()}-${file.name}`
+    if (!file) {
+      return NextResponse.json({ error: 'No file' }, { status: 400 })
+    }
 
-  await supabaseAdmin.storage
-    .from('djs')
-    .upload(fileName, file)
+    const fileName = `${Date.now()}-${file.name}`
 
-  const { data } = supabaseAdmin.storage
-    .from('djs')
-    .getPublicUrl(fileName)
+    const { error } = await supabaseAdmin.storage
+      .from('djs')
+      .upload(fileName, file)
 
-  return NextResponse.json({ url: data.publicUrl })
+    if (error) {
+      console.error(error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const { data } = supabaseAdmin.storage
+      .from('djs')
+      .getPublicUrl(fileName)
+
+    return NextResponse.json({ url: data.publicUrl })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+  }
 }
