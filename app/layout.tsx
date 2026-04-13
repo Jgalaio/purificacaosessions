@@ -2,7 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Purificação Sessions',
+  title: 'Quarentões 26 Sessions',
   description: 'Sistema de votação DJ',
 }
 
