@@ -3,11 +3,15 @@ import { supabase } from '@/lib/supabase'
 
 // GET
 export async function GET() {
-  const { data } = await supabase.from('djs').select('*').order('created_at')
+  const { data } = await supabase
+    .from('djs')
+    .select('*')
+    .order('created_at')
+
   return NextResponse.json(data)
 }
 
-// POST (CRIAR DJ)
+// POST
 export async function POST(req: Request) {
   const { name, image_url } = await req.json()
 

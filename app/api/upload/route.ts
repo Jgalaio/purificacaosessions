@@ -19,7 +19,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const { data } = supabase.storage.from('djs').getPublicUrl(fileName)
+  const { data } = supabase.storage
+    .from('djs')
+    .getPublicUrl(fileName)
 
   return NextResponse.json({ url: data.publicUrl })
 }
