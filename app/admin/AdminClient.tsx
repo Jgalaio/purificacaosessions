@@ -157,7 +157,15 @@ export default function AdminClient() {
         <button onClick={() => setTab('ranking')} className={tabBtn(tab === 'ranking')}>Ranking</button>
         <button onClick={() => setTab('control')} className={tabBtn(tab === 'control')}>Controlo</button>
       </div>
-
+<button
+  onClick={async () => {
+    await fetch('/api/admin-logout', { method: 'POST' })
+    window.location.href = '/admin-login'
+  }}
+  className="px-4 py-2 bg-red-500 text-white rounded"
+>
+  Logout
+</button>
       {/* ================= DJs ================= */}
       {tab === 'djs' && (
         <div>

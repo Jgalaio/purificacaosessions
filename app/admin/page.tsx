@@ -4,10 +4,10 @@ import AdminClient from './AdminClient'
 
 export default async function AdminPage() {
   const cookieStore = await cookies()
-  const isAuthenticated = cookieStore.get('admin-auth')?.value === 'true'
+  const isAuth = cookieStore.get('admin_auth')?.value === 'true'
 
-  if (!isAuthenticated) {
-    redirect('/admin/login')
+  if (!isAuth) {
+    redirect('/admin-login')
   }
 
   return <AdminClient />
