@@ -9,11 +9,18 @@ export default function PrintClient() {
     fetchCodes()
   }, [])
 
-  const fetchCodes = async () => {
+const fetchCodes = async () => {
+  try {
     const res = await fetch('/api/codes')
     const data = await res.json()
+
+    console.log('CODES:', data) // 👈 DEBUG
+
     setCodes(data)
+  } catch (err) {
+    console.error('Erro ao buscar códigos', err)
   }
+}
 
   return (
     <main className="bg-white flex flex-col items-center p-4 font-mono">
