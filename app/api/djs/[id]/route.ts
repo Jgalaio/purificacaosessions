@@ -3,13 +3,22 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { data } = await supabaseAdmin
+  const { id } = await context.params // ✅ CORRETO
+
+  const { data, error } = await supabaseAdmin
     .from('djs')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
+
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
+  }
 
   return NextResponse.json(data)
 }
