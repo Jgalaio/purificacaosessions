@@ -10,8 +10,10 @@ export default function AdminClient() {
   const [djs, setDjs] = useState<any[]>([])
   const [ranking, setRanking] = useState<any[]>([])
   const [votingOpen, setVotingOpen] = useState(true)
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
 
   // ================= INIT =================
   useEffect(() => {
@@ -52,6 +54,40 @@ export default function AdminClient() {
     fetchDjs()
   }
 
+  // ➕ ADICIONAR DJ
+  const handleAdd = async () => {
+    if (!newName || !file) {
+      alert('Preenche nome e imagem')
+      return
+    }
+
+    // upload imagem
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const uploadData = await uploadRes.json()
+
+    // criar DJ
+    await fetch('/api/djs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newName,
+        image_url: uploadData.url,
+      }),
+    })
+
+    setNewName('')
+    setFile(null)
+
+    fetchDjs()
+  }
+
   // ================= RANKING =================
   const fetchRanking = async () => {
     const res = await fetch('/api/ranking')
@@ -59,21 +95,18 @@ export default function AdminClient() {
     setRanking(data || [])
   }
 
-  // ✅ REALTIME (CORRIGIDO)
+  // ✅ REALTIME FIX
   useEffect(() => {
     const channel = supabase
       .channel('votes-pro')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'votes' },
-        () => {
-          fetchRanking()
-        }
+        () => fetchRanking()
       )
       .subscribe()
 
     return () => {
-      // 🔥 IMPORTANTE: sem async
       supabase.removeChannel(channel)
     }
   }, [])
@@ -98,10 +131,7 @@ export default function AdminClient() {
   const resetVotes = async () => {
     if (!confirm('Resetar TODOS os votos?')) return
 
-    await fetch('/api/reset', {
-      method: 'POST',
-    })
-
+    await fetch('/api/reset', { method: 'POST' })
     fetchRanking()
   }
 
@@ -117,74 +147,91 @@ export default function AdminClient() {
           target="_blank"
           className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white font-bold"
         >
-          🎥 Abrir Live
+          🎥 LIVE
         </a>
       </div>
 
       {/* TABS */}
       <div className="flex gap-3 mb-8">
-        <button onClick={() => setTab('djs')} className={tabBtn(tab === 'djs')}>
-          DJs
-        </button>
-
-        <button onClick={() => setTab('ranking')} className={tabBtn(tab === 'ranking')}>
-          Ranking
-        </button>
-
-        <button onClick={() => setTab('control')} className={tabBtn(tab === 'control')}>
-          Controlo
-        </button>
+        <button onClick={() => setTab('djs')} className={tabBtn(tab === 'djs')}>DJs</button>
+        <button onClick={() => setTab('ranking')} className={tabBtn(tab === 'ranking')}>Ranking</button>
+        <button onClick={() => setTab('control')} className={tabBtn(tab === 'control')}>Controlo</button>
       </div>
 
       {/* ================= DJs ================= */}
       {tab === 'djs' && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {djs.map((dj) => (
-            <div key={dj.id} className="border rounded-xl p-3 shadow-sm">
-              <img
-                src={dj.image_url}
-                className="h-40 w-full object-cover rounded mb-2"
-              />
+        <div>
+          {/* FORM */}
+          <div className="mb-8 p-4 border rounded-xl">
+            <h3 className="font-bold mb-3">Adicionar DJ</h3>
 
-              {editingId === dj.id ? (
-                <>
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="border p-2 w-full mb-2 rounded"
-                  />
+            <input
+              placeholder="Nome do DJ"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="border p-2 w-full mb-3 rounded"
+            />
+
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="mb-3"
+            />
+
+            <button
+              onClick={handleAdd}
+              className="px-4 py-2 bg-black text-white rounded"
+            >
+              ➕ Adicionar
+            </button>
+          </div>
+
+          {/* LISTA */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {djs.map((dj) => (
+              <div key={dj.id} className="border rounded-xl p-3 shadow-sm">
+                <img src={dj.image_url} className="h-40 w-full object-cover rounded mb-2" />
+
+                {editingId === dj.id ? (
+                  <>
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="border p-2 w-full mb-2 rounded"
+                    />
+
+                    <button
+                      onClick={() => updateName(dj.id)}
+                      className="bg-black text-white px-3 py-1 rounded"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                ) : (
+                  <p className="font-bold">{dj.name}</p>
+                )}
+
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      setEditingId(dj.id)
+                      setNewName(dj.name)
+                    }}
+                    className="px-2 py-1 bg-yellow-400 rounded"
+                  >
+                    ✏️
+                  </button>
 
                   <button
-                    onClick={() => updateName(dj.id)}
-                    className="bg-black text-white px-3 py-1 rounded"
+                    onClick={() => deleteDj(dj.id)}
+                    className="px-2 py-1 bg-red-500 text-white rounded"
                   >
-                    Guardar
+                    ❌
                   </button>
-                </>
-              ) : (
-                <p className="font-bold">{dj.name}</p>
-              )}
-
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => {
-                    setEditingId(dj.id)
-                    setNewName(dj.name)
-                  }}
-                  className="px-2 py-1 bg-yellow-400 rounded"
-                >
-                  ✏️
-                </button>
-
-                <button
-                  onClick={() => deleteDj(dj.id)}
-                  className="px-2 py-1 bg-red-500 text-white rounded"
-                >
-                  ❌
-                </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -192,20 +239,11 @@ export default function AdminClient() {
       {tab === 'ranking' && (
         <div className="space-y-3">
           {ranking.map((dj, i) => (
-            <div
-              key={dj.id}
-              className="flex items-center gap-4 border p-3 rounded-xl shadow-sm"
-            >
+            <div key={dj.id} className="flex items-center gap-4 border p-3 rounded-xl">
               <div className="w-10 font-black">#{i + 1}</div>
-
-              <img
-                src={dj.image_url}
-                className="w-12 h-12 rounded object-cover"
-              />
-
-              <div className="flex-1 font-medium">{dj.name}</div>
-
-              <div className="font-bold text-lg">{dj.votes}</div>
+              <img src={dj.image_url} className="w-12 h-12 rounded object-cover" />
+              <div className="flex-1">{dj.name}</div>
+              <div className="font-bold">{dj.votes}</div>
             </div>
           ))}
         </div>
@@ -233,7 +271,7 @@ export default function AdminClient() {
           </div>
 
           <div className="p-6 border rounded-xl">
-            <h2 className="text-xl font-bold mb-2">Reset geral</h2>
+            <h2 className="text-xl font-bold mb-2">Reset</h2>
 
             <button
               onClick={resetVotes}
@@ -245,16 +283,12 @@ export default function AdminClient() {
 
         </div>
       )}
-
     </main>
   )
 }
 
-// BOTÃO TABS
 function tabBtn(active: boolean) {
-  return `px-4 py-2 rounded-xl font-bold transition ${
-    active
-      ? 'bg-black text-white'
-      : 'bg-zinc-200 hover:bg-zinc-300'
+  return `px-4 py-2 rounded-xl font-bold ${
+    active ? 'bg-black text-white' : 'bg-zinc-200'
   }`
 }
