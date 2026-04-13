@@ -3,6 +3,16 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+<button
+  onClick={async () => {
+    await fetch('/api/admin-logout', { method: 'POST' })
+    window.location.href = '/admin-login'
+  }}
+  className="px-4 py-2 bg-red-500 text-white rounded"
+>
+  Logout
+</button>
+
 type Tab = 'djs' | 'ranking' | 'control'
 
 export default function AdminClient() {
