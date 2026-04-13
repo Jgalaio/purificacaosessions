@@ -16,7 +16,6 @@ export default function VotePage() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // ================= FETCH DJ =================
   useEffect(() => {
     fetchDj()
   }, [])
@@ -33,7 +32,6 @@ export default function VotePage() {
     }
   }
 
-  // ================= VOTAR =================
   const handleVote = async () => {
     if (!code) {
       setMessage('Introduce o código')
@@ -58,11 +56,9 @@ export default function VotePage() {
         return
       }
 
-      // ✅ SUCESSO
       setSuccess(true)
       setSubmitting(false)
 
-      // ⏳ REDIRECT AUTOMÁTICO
       setTimeout(() => {
         router.push('/')
       }, 3000)
@@ -73,10 +69,10 @@ export default function VotePage() {
     }
   }
 
-  // ================= LOADING =================
+  // LOADING
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white">
+      <main className="min-h-screen flex items-center justify-center bg-white text-black">
         <div className="animate-pulse text-xl">
           A carregar DJ...
         </div>
@@ -85,7 +81,7 @@ export default function VotePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+    <main className="min-h-screen bg-white text-black flex items-center justify-center px-6">
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -93,38 +89,38 @@ export default function VotePage() {
         className="max-w-md w-full"
       >
 
-        {/* IMAGEM DJ */}
-        <div className="relative mb-6 rounded-3xl overflow-hidden shadow-2xl">
+        {/* IMAGEM */}
+        <div className="relative mb-6 rounded-3xl overflow-hidden shadow-xl">
           <img
             src={dj.image_url}
             className="w-full h-[320px] object-cover"
           />
 
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/30" />
 
           <div className="absolute inset-0 flex items-center justify-center">
-            <h1 className="text-4xl font-black text-center drop-shadow-lg">
+            <h1 className="text-4xl font-black text-white drop-shadow-lg">
               {dj.name}
             </h1>
           </div>
         </div>
 
-        {/* ================= SUCESSO ================= */}
+        {/* SUCESSO */}
         {success ? (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-center p-6 bg-green-500/10 border border-green-500 rounded-2xl"
+            className="text-center p-6 bg-green-50 border border-green-300 rounded-2xl"
           >
-            <p className="text-2xl font-bold mb-2">
+            <p className="text-2xl font-bold text-green-600 mb-2">
               ✅ Voto registado!
             </p>
 
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-zinc-600">
               Obrigado pela tua participação
             </p>
 
-            <p className="text-xs text-zinc-500 mt-2">
+            <p className="text-xs text-zinc-400 mt-2">
               A redirecionar...
             </p>
           </motion.div>
@@ -135,21 +131,21 @@ export default function VotePage() {
               placeholder="Código de voto"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-700 mb-4 outline-none focus:ring-2 focus:ring-fuchsia-500"
+              className="w-full p-4 rounded-2xl bg-zinc-100 border border-zinc-300 mb-4 outline-none focus:ring-2 focus:ring-fuchsia-500"
             />
 
             {/* BOTÃO */}
             <button
               onClick={handleVote}
               disabled={submitting}
-              className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-fuchsia-500 to-cyan-500 shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
+              className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-fuchsia-500 to-cyan-500 shadow-md hover:scale-[1.02] transition disabled:opacity-50"
             >
               {submitting ? 'A votar...' : 'Votar'}
             </button>
 
             {/* ERRO */}
             {message && (
-              <p className="mt-4 text-center text-red-400 font-medium">
+              <p className="mt-4 text-center text-red-500 font-medium">
                 {message}
               </p>
             )}
