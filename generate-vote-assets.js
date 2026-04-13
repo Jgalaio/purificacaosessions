@@ -19,7 +19,9 @@ function generateCode(index) {
 
 const used = new Set()
 const codes = []
-const csvRows = ['code,is_used,voted_dj_slug,voted_at']
+
+// 🔥 NOVO FORMATO (compatível com Supabase)
+const csvRows = ['code,used']
 
 for (let i = 1; i <= TOTAL_CODES; i++) {
   let code
@@ -29,35 +31,33 @@ for (let i = 1; i <= TOTAL_CODES; i++) {
 
   used.add(code)
   codes.push(code)
-  csvRows.push(`${code},false,,`)
+
+  // usado = false por default
+  csvRows.push(`${code},false`)
 }
 
-// caminhos absolutos
+// caminhos
 const projectRoot = process.cwd()
 const dataDir = path.join(projectRoot, 'data')
 const jsonPath = path.join(dataDir, 'codes.json')
 const csvPath = path.join(projectRoot, 'vote_codes.csv')
 
 try {
-  // garantir pasta /data
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true })
-    console.log(`Pasta criada: ${dataDir}`)
   }
 
-  // escrever JSON
+  // JSON (opcional)
   fs.writeFileSync(jsonPath, JSON.stringify(codes, null, 2), 'utf8')
 
-  // escrever CSV
+  // CSV (para importar no Supabase)
   fs.writeFileSync(csvPath, csvRows.join('\n'), 'utf8')
 
   console.log('-----------------------------------')
-  console.log('Ficheiros criados com sucesso:')
-  console.log(`JSON: ${jsonPath}`)
-  console.log(`CSV : ${csvPath}`)
-  console.log(`Total de códigos: ${TOTAL_CODES}`)
+  console.log('Códigos gerados com sucesso!')
+  console.log(`CSV: ${csvPath}`)
+  console.log(`Total: ${TOTAL_CODES}`)
   console.log('-----------------------------------')
 } catch (error) {
-  console.error('ERRO AO CRIAR FICHEIROS:')
-  console.error(error)
+  console.error('ERRO:', error)
 }

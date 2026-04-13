@@ -23,22 +23,30 @@ export async function POST(req: Request) {
     )
   }
 
-  // 🔐 código único
-  const { data: existingCode } = await supabaseAdmin
-    .from('votes')
+  // 🔐 verificar se código existe
+  const { data: voteCode } = await supabaseAdmin
+    .from('vote_codes')
     .select('*')
     .eq('code', code)
     .maybeSingle()
 
-  if (existingCode) {
+  if (!voteCode) {
     return NextResponse.json(
-      { error: 'Código já usado' },
+      { error: 'Código inválido' },
       { status: 400 }
     )
   }
 
-  // ⚖️ LIMITE POR IP (CONFIGURÁVEL)
-  const LIMIT = 20 // 👈 podes aumentar
+  // 🚫 verificar se já foi usado
+  if (voteCode.used) {
+    return NextResponse.json(
+      { error: 'Código já utilizado' },
+      { status: 400 }
+    )
+  }
+
+  // ⚖️ limite por IP (opcional)
+  const LIMIT = 50
 
   const { count } = await supabaseAdmin
     .from('votes')
@@ -47,7 +55,7 @@ export async function POST(req: Request) {
 
   if ((count || 0) > LIMIT) {
     return NextResponse.json(
-      { error: 'Limite de votos por IP atingido' },
+      { error: 'Limite de votos atingido' },
       { status: 429 }
     )
   }
@@ -60,6 +68,12 @@ export async function POST(req: Request) {
       ip,
     },
   ])
+
+  // ✅ marcar código como usado
+  await supabaseAdmin
+    .from('vote_codes')
+    .update({ used: true })
+    .eq('code', code)
 
   return NextResponse.json({ success: true })
 }
