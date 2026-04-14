@@ -14,6 +14,7 @@ export default function PrintClient() {
 
   const [mode, setMode] = useState<'ticket' | 'a4'>('ticket')
 
+  // ================= INIT =================
   useEffect(() => {
     fetchCodes()
   }, [])
@@ -26,12 +27,14 @@ export default function PrintClient() {
     generateQR()
   }, [filtered])
 
+  // ================= FETCH =================
   const fetchCodes = async () => {
     const res = await fetch('/api/codes')
     const data = await res.json()
     setCodes(data)
   }
 
+  // ================= FILTER =================
   const applyFilter = () => {
     let list = [...codes]
 
@@ -43,6 +46,7 @@ export default function PrintClient() {
     setFiltered(slice)
   }
 
+  // ================= QR =================
   const generateQR = async () => {
     const result = await Promise.all(
       filtered.map(async (c: any) => {
@@ -58,6 +62,7 @@ export default function PrintClient() {
     setItems(result)
   }
 
+  // ================= DISTRIBUTE =================
   const markAsDistributed = async () => {
     const codesToUpdate = filtered.map(c => c.code)
 
@@ -74,10 +79,9 @@ export default function PrintClient() {
   return (
     <main className="bg-white p-4 font-mono">
 
-      {/* CONTROLOS */}
+      {/* ================= CONTROLOS ================= */}
       <div className="mb-4 print:hidden flex flex-wrap gap-2 items-center">
 
-        {/* INTERVALO */}
         <input
           type="number"
           value={start}
@@ -94,7 +98,6 @@ export default function PrintClient() {
           className="border p-2 w-20"
         />
 
-        {/* SELECT MODO */}
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as any)}
@@ -169,43 +172,56 @@ export default function PrintClient() {
         </div>
       )}
 
-      {/* ================= A4 ================= */}
+      {/* ================= A4 MULTIPÁGINA ================= */}
       {mode === 'a4' && (
-        <div className="grid grid-cols-3 gap-4 print:grid-cols-3">
+        <div>
 
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className={`border p-3 text-center ${
-                item.distributed ? 'bg-red-100' : 'bg-white'
-              }`}
-              style={{ height: '220px' }}
-            >
+          {Array.from({ length: Math.ceil(items.length / 12) }).map((_, pageIndex) => {
+            const pageItems = items.slice(pageIndex * 12, (pageIndex + 1) * 12)
 
-              <p className="text-[10px]">
-                VOTA NO TEU DJ PREFERIDO
-              </p>
+            return (
+              <div
+                key={pageIndex}
+                className="grid grid-cols-3 gap-4 mb-6 print:mb-0 print:break-after-page"
+              >
 
-              <p className="text-[9px] text-gray-600 mb-1">
-                Quarentões 26 Sessions
-              </p>
+                {pageItems.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`border p-3 text-center ${
+                      item.distributed ? 'bg-red-100' : 'bg-white'
+                    }`}
+                    style={{ height: '240px' }}
+                  >
 
-              <img src={item.qr} className="w-24 mx-auto mb-2" />
+                    <p className="text-[10px]">
+                      VOTA NO TEU DJ PREFERIDO
+                    </p>
 
-              <p className="text-xs font-bold tracking-widest">
-                {item.code}
-              </p>
+                    <p className="text-[9px] text-gray-600 mb-1">
+                      Quarentões 26 Sessions
+                    </p>
 
-              <p className="text-[8px]">
-                {item.distributed ? 'ENTREGUE' : 'DISPONÍVEL'}
-              </p>
+                    <img src={item.qr} className="w-24 mx-auto mb-2" />
 
-              <div className="border-t border-dashed border-black text-[8px] mt-2">
-                ✂ cortar
+                    <p className="text-xs font-bold tracking-widest">
+                      {item.code}
+                    </p>
+
+                    <p className="text-[8px]">
+                      {item.distributed ? 'ENTREGUE' : 'DISPONÍVEL'}
+                    </p>
+
+                    <div className="border-t border-dashed border-black text-[8px] mt-2">
+                      ✂ cortar
+                    </div>
+
+                  </div>
+                ))}
+
               </div>
-
-            </div>
-          ))}
+            )
+          })}
 
         </div>
       )}
