@@ -16,7 +16,7 @@ export default function VotePage() {
 
   const scannerRef = useRef<any>(null)
 
-  // ================= FETCH =================
+  // ================= FETCH DJ =================
   useEffect(() => {
     fetch(`/api/djs/${dj}`)
       .then(res => res.json())
@@ -60,15 +60,15 @@ export default function VotePage() {
     setLoading(false)
   }
 
-  // ================= SCANNER =================
+  // ================= START SCANNER =================
   const startScanner = async () => {
     setScanning(true)
 
-    const scanner = new Html5Qrcode("reader")
+    const scanner = new Html5Qrcode('reader')
     scannerRef.current = scanner
 
     await scanner.start(
-      { facingMode: "environment" },
+      { facingMode: 'environment' },
       { fps: 10, qrbox: 250 },
       (decodedText) => {
         const match = decodedText.match(/PS-[A-Z0-9]{4}-\d{6}/)
@@ -76,16 +76,21 @@ export default function VotePage() {
         if (match) {
           const code = match[0]
 
+          // evitar duplicados
           if (code === lastScan) return
           setLastScan(code)
 
           stopScanner()
           autoVote(code)
         }
+      },
+      () => {
+        // ignorar erros contínuos
       }
     )
   }
 
+  // ================= STOP SCANNER =================
   const stopScanner = async () => {
     if (scannerRef.current) {
       await scannerRef.current.stop()
@@ -111,7 +116,6 @@ export default function VotePage() {
               className="w-full h-64 object-cover"
             />
 
-            {/* OVERLAY */}
             <div className="absolute inset-0 bg-black/30 flex items-end p-4">
               <h1 className="text-white text-2xl font-bold">
                 {djData.name}
@@ -122,20 +126,21 @@ export default function VotePage() {
           {/* CONTENT */}
           <div className="p-5 space-y-4">
 
-            {/* STATUS */}
+            {/* SUCCESS */}
             {success && (
               <div className="bg-green-100 text-green-700 p-3 rounded-xl text-center font-bold">
                 ✅ Voto registado!
               </div>
             )}
 
+            {/* LOADING */}
             {loading && (
               <div className="text-center text-gray-500">
                 A registar voto...
               </div>
             )}
 
-            {/* BOTÕES */}
+            {/* BUTTONS */}
             {!scanning ? (
               <button
                 onClick={startScanner}
@@ -154,7 +159,7 @@ export default function VotePage() {
               </button>
             )}
 
-            {/* SCANNER */}
+            {/* SCANNER VIEW */}
             <div
               id="reader"
               className={`w-full overflow-hidden rounded-xl ${
