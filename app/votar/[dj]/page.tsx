@@ -11,11 +11,12 @@ export default function VotePage() {
   const [djData, setDjData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [scanning, setScanning] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [lastScan, setLastScan] = useState<string | null>(null)
 
   const scannerRef = useRef<any>(null)
 
-  // ================= FETCH DJ =================
+  // ================= FETCH =================
   useEffect(() => {
     fetch(`/api/djs/${dj}`)
       .then(res => res.json())
@@ -49,17 +50,17 @@ export default function VotePage() {
       alert(data.error)
     } else {
       beep()
-      alert('✅ Voto registado!')
+      setSuccess(true)
 
       setTimeout(() => {
         router.push('/')
-      }, 2000)
+      }, 2500)
     }
 
     setLoading(false)
   }
 
-  // ================= START SCANNER =================
+  // ================= SCANNER =================
   const startScanner = async () => {
     setScanning(true)
 
@@ -68,30 +69,23 @@ export default function VotePage() {
 
     await scanner.start(
       { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: 250,
-      },
+      { fps: 10, qrbox: 250 },
       (decodedText) => {
         const match = decodedText.match(/PS-[A-Z0-9]{4}-\d{6}/)
 
         if (match) {
           const code = match[0]
 
-          // 🚫 evitar repetir scans
           if (code === lastScan) return
-
           setLastScan(code)
 
           stopScanner()
           autoVote(code)
         }
-      },
-      () => {}
+      }
     )
   }
 
-  // ================= STOP =================
   const stopScanner = async () => {
     if (scannerRef.current) {
       await scannerRef.current.stop()
@@ -103,45 +97,77 @@ export default function VotePage() {
   if (!djData) return <p className="p-6">A carregar...</p>
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <main className="min-h-screen bg-white flex items-center justify-center p-6">
 
-      <div className="max-w-sm w-full text-center">
+      <div className="max-w-md w-full">
 
-        <img
-          src={djData.image_url}
-          className="w-full h-60 object-cover rounded-xl mb-4"
-        />
+        {/* CARD */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
-        <h1 className="text-2xl font-bold mb-4">
-          {djData.name}
-        </h1>
+          {/* IMAGE */}
+          <div className="relative">
+            <img
+              src={djData.image_url}
+              className="w-full h-64 object-cover"
+            />
 
-        {!scanning ? (
-          <button
-            onClick={startScanner}
-            className="w-full py-4 bg-blue-600 text-white rounded text-lg"
-          >
-            📷 Iniciar Scanner
-          </button>
-        ) : (
-          <button
-            onClick={stopScanner}
-            className="w-full py-4 bg-red-600 text-white rounded text-lg"
-          >
-            ❌ Parar Scanner
-          </button>
-        )}
+            {/* OVERLAY */}
+            <div className="absolute inset-0 bg-black/30 flex items-end p-4">
+              <h1 className="text-white text-2xl font-bold">
+                {djData.name}
+              </h1>
+            </div>
+          </div>
 
-        {/* CAMERA */}
-        <div id="reader" className="w-full mt-4" />
+          {/* CONTENT */}
+          <div className="p-5 space-y-4">
 
-        {loading && (
-          <p className="mt-4 font-bold">
-            A registar voto...
-          </p>
-        )}
+            {/* STATUS */}
+            {success && (
+              <div className="bg-green-100 text-green-700 p-3 rounded-xl text-center font-bold">
+                ✅ Voto registado!
+              </div>
+            )}
+
+            {loading && (
+              <div className="text-center text-gray-500">
+                A registar voto...
+              </div>
+            )}
+
+            {/* BOTÕES */}
+            {!scanning ? (
+              <button
+                onClick={startScanner}
+                className="w-full py-4 rounded-xl text-white font-bold text-lg
+                bg-gradient-to-r from-fuchsia-500 to-cyan-500
+                hover:scale-105 transition"
+              >
+                📷 Votar com Scanner
+              </button>
+            ) : (
+              <button
+                onClick={stopScanner}
+                className="w-full py-4 rounded-xl text-white font-bold bg-red-500"
+              >
+                ❌ Parar Scanner
+              </button>
+            )}
+
+            {/* SCANNER */}
+            <div
+              id="reader"
+              className={`w-full overflow-hidden rounded-xl ${
+                scanning ? 'block' : 'hidden'
+              }`}
+            />
+
+          </div>
+
+        </div>
 
       </div>
+
     </main>
   )
 }
