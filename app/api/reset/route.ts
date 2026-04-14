@@ -8,11 +8,11 @@ export async function POST() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 🔥 apagar votos
+    // 🔥 apagar TODOS os votos
     const { error: votesError } = await supabase
       .from('votes')
       .delete()
-      .neq('id', '') // 👈 FIX
+      .not('id', 'is', null) // ✅ FIX REAL
 
     if (votesError) throw votesError
 
@@ -21,17 +21,15 @@ export async function POST() {
       .from('vote_codes')
       .update({
         used: false,
-        voted_dj_slug: null,
-        voted_at: null,
       })
-      .neq('code', '') // 👈 opcional mas seguro
+      .not('id', 'is', null) // ✅ igual aqui
 
     if (codesError) throw codesError
 
     return NextResponse.json({ success: true })
 
   } catch (error: any) {
-    console.error(error)
+    console.error('RESET ERROR:', error)
 
     return NextResponse.json(
       { error: error.message },
