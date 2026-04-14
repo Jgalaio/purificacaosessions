@@ -1,21 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// 🔥 CLIENT ADMIN (IMPORTANTE)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // tem de ser service role
-)
-
 export async function POST() {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    console.log('🔁 RESET START')
+
     // ================= APAGAR VOTOS =================
     const { error: votesError } = await supabase
       .from('votes')
       .delete()
       .neq('id', 0)
 
-    if (votesError) throw votesError
+    if (votesError) {
+      console.error('❌ ERRO VOTES:', votesError)
+      throw votesError
+    }
 
     // ================= RESETAR CÓDIGOS =================
     const { error: codesError } = await supabase
@@ -27,18 +31,22 @@ export async function POST() {
       })
       .neq('code', '')
 
-    if (codesError) throw codesError
+    if (codesError) {
+      console.error('❌ ERRO CODES:', codesError)
+      throw codesError
+    }
+
+    console.log('✅ RESET OK')
 
     return NextResponse.json({
       success: true,
-      message: 'Votos resetados com sucesso',
     })
 
-  } catch (error) {
-    console.error('RESET ERROR:', error)
+  } catch (error: any) {
+    console.error('🔥 RESET FAIL:', error)
 
     return NextResponse.json(
-      { error: 'Erro ao fazer reset dos votos' },
+      { error: error.message || 'Erro no reset' },
       { status: 500 }
     )
   }
