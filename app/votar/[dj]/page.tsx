@@ -2,140 +2,149 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import Tesseract from 'tesseract.js'
 
 export default function VotePage() {
-  const params = useParams()
+  const { dj } = useParams()
   const router = useRouter()
-  const djId = params.dj as string
 
-  const [dj, setDj] = useState<any>(null)
   const [code, setCode] = useState('')
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [djData, setDjData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [scanning, setScanning] = useState(false)
 
+  // ================= FETCH DJ =================
   useEffect(() => {
-    fetchDj()
-  }, [])
+    fetch(`/api/djs/${dj}`)
+      .then(res => res.json())
+      .then(setDjData)
+  }, [dj])
 
-  const fetchDj = async () => {
-    const res = await fetch(`/api/djs/${djId}`)
-    const data = await res.json()
-    setDj(data)
-    setLoading(false)
+  // ================= SCANNER =================
+  const handleScan = async () => {
+    try {
+      setScanning(true)
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      })
+
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.setAttribute('playsinline', 'true')
+
+      await video.play()
+
+      await new Promise((resolve) => {
+        video.onloadedmetadata = resolve
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
+      const ctx = canvas.getContext('2d')
+      ctx?.drawImage(video, 0, 0)
+
+      stream.getTracks().forEach(track => track.stop())
+
+      const image = canvas.toDataURL('image/png')
+
+      const result = await Tesseract.recognize(image, 'eng')
+
+      const text = result.data.text
+
+      const match = text.match(/PS-[A-Z0-9]{4}-\d{6}/)
+
+      if (match) {
+        setCode(match[0])
+      } else {
+        alert('Código não reconhecido')
+      }
+
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao usar câmara')
+    }
+
+    setScanning(false)
   }
 
+  // ================= VOTAR =================
   const handleVote = async () => {
     if (!code) {
-      setMessage('Introduce o código')
+      alert('Insere ou lê um código')
       return
     }
 
-    setSubmitting(true)
-    setMessage('')
+    setLoading(true)
 
     const res = await fetch('/api/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, dj_id: djId }),
+      body: JSON.stringify({
+        code,
+        dj_id: dj,
+      }),
     })
 
     const data = await res.json()
 
     if (!res.ok) {
-      setMessage(data.error)
-      setSubmitting(false)
-      return
+      alert(data.error)
+    } else {
+      alert('✅ Voto registado!')
+
+      // voltar à home após 3s
+      setTimeout(() => {
+        router.push('/')
+      }, 3000)
     }
 
-    setSuccess(true)
-    setSubmitting(false)
-
-    setTimeout(() => {
-      router.push('/')
-    }, 3000)
+    setLoading(false)
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-white text-black">
-        A carregar...
-      </main>
-    )
-  }
+  if (!djData) return <p className="p-6">A carregar...</p>
 
   return (
-    <main className="min-h-screen bg-white text-black flex items-center justify-center px-6">
+    <main className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full"
-      >
+      <div className="max-w-sm w-full text-center">
 
-        {/* CARD */}
-        <div className="bg-white border border-zinc-200 rounded-3xl shadow-xl p-4">
+        <img
+          src={djData.image_url}
+          className="w-full h-60 object-cover rounded-xl mb-4"
+        />
 
-          {/* IMAGEM */}
-          <div className="relative mb-4 rounded-2xl overflow-hidden">
-            <img
-              src={dj.image_url}
-              className="w-full h-[260px] object-cover"
-            />
+        <h1 className="text-2xl font-bold mb-4">
+          {djData.name}
+        </h1>
 
-            <div className="absolute inset-0 bg-black/20" />
+        {/* INPUT */}
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Código"
+          className="w-full border p-3 rounded mb-3 text-center tracking-widest"
+        />
 
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h1 className="text-3xl font-black text-white drop-shadow">
-                {dj.name}
-              </h1>
-            </div>
-          </div>
+        {/* SCAN */}
+        <button
+          onClick={handleScan}
+          className="w-full mb-3 py-3 bg-blue-600 text-white rounded"
+        >
+          {scanning ? 'A ler...' : '📷 Ler código'}
+        </button>
 
-          {/* SUCESSO */}
-          {success ? (
-            <div className="text-center p-4 bg-green-50 border border-green-300 rounded-xl">
-              <p className="text-xl font-bold text-green-600">
-                ✅ Voto registado!
-              </p>
+        {/* VOTAR */}
+        <button
+          onClick={handleVote}
+          className="w-full py-3 bg-black text-white rounded"
+        >
+          {loading ? 'A votar...' : 'Votar'}
+        </button>
 
-              <p className="text-sm text-zinc-600 mt-2">
-                A redirecionar...
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* INPUT */}
-              <input
-                placeholder="Código de voto"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full p-3 rounded-xl border border-zinc-300 mb-3 outline-none focus:ring-2 focus:ring-fuchsia-500"
-              />
-
-              {/* BOTÃO */}
-              <button
-                onClick={handleVote}
-                disabled={submitting}
-                className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-fuchsia-500 to-cyan-500"
-              >
-                {submitting ? 'A votar...' : 'Votar'}
-              </button>
-
-              {/* ERRO */}
-              {message && (
-                <p className="mt-3 text-center text-red-500">
-                  {message}
-                </p>
-              )}
-            </>
-          )}
-
-        </div>
-
-      </motion.div>
+      </div>
     </main>
   )
 }
