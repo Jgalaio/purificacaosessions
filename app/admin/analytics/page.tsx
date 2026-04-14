@@ -12,22 +12,29 @@ export default function AnalyticsPage() {
     setData(json)
   }
 
-  useEffect(() => {
-    fetchData()
+useEffect(() => {
+  fetchData()
 
-    const channel = supabase
-      .channel('analytics-live')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'votes' },
-        fetchData
-      )
-      .subscribe()
+  const channel = supabase
+    .channel('analytics-live')
+    .on(
+      'postgres_changes',
+      {
+        event: '*', // 🔥 ouvir tudo (INSERT, UPDATE, DELETE)
+        schema: 'public',
+        table: 'votes',
+      },
+      () => {
+        console.log('🔄 voto recebido (realtime)')
+        fetchData()
+      }
+    )
+    .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
 
   if (!data) return <p className="p-6">A carregar...</p>
 
