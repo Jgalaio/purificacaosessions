@@ -198,6 +198,7 @@ export default function AdminClient() {
         <h1 className="text-3xl font-black">Admin Panel</h1>
 
         <div className="flex gap-2">
+
           <a
             href="/live"
             target="_blank"
@@ -206,12 +207,20 @@ export default function AdminClient() {
             🎥 LIVE
           </a>
 
+          <a
+            href="/admin/analytics"
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold"
+          >
+            📊 Analytics
+          </a>
+
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-red-500 text-white rounded-xl"
           >
             Logout
           </button>
+
         </div>
       </div>
 
@@ -371,4 +380,3 @@ function tabBtn(active: boolean) {
     active ? 'bg-black text-white' : 'bg-zinc-200'
   }`
 }
-
