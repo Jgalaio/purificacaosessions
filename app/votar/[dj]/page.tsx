@@ -16,17 +16,21 @@ export default function VotePage() {
 
   const scannerRef = useRef<any>(null)
 
-  // ================= FETCH DJ =================
+  // ================= FETCH =================
   useEffect(() => {
     fetch(`/api/djs/${dj}`)
       .then(res => res.json())
       .then(setDjData)
   }, [dj])
 
-  // ================= SOM =================
-  const beep = () => {
+  // ================= SOM + VIBRA =================
+  const feedback = () => {
     const audio = new Audio('/beep.mp3')
     audio.play()
+
+    if (navigator.vibrate) {
+      navigator.vibrate(150)
+    }
   }
 
   // ================= AUTO VOTE =================
@@ -49,18 +53,18 @@ export default function VotePage() {
     if (!res.ok) {
       alert(data.error)
     } else {
-      beep()
+      feedback()
       setSuccess(true)
 
       setTimeout(() => {
         router.push('/')
-      }, 2500)
+      }, 2000)
     }
 
     setLoading(false)
   }
 
-  // ================= START SCANNER =================
+  // ================= SCANNER =================
   const startScanner = async () => {
     setScanning(true)
 
@@ -69,14 +73,13 @@ export default function VotePage() {
 
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: 250 },
+      { fps: 12, qrbox: 260 },
       (decodedText) => {
         const match = decodedText.match(/PS-[A-Z0-9]{4}-\d{6}/)
 
         if (match) {
           const code = match[0]
 
-          // evitar duplicados
           if (code === lastScan) return
           setLastScan(code)
 
@@ -84,13 +87,10 @@ export default function VotePage() {
           autoVote(code)
         }
       },
-      () => {
-        // ignorar erros contínuos
-      }
+      () => {}
     )
   }
 
-  // ================= STOP SCANNER =================
   const stopScanner = async () => {
     if (scannerRef.current) {
       await scannerRef.current.stop()
@@ -99,7 +99,7 @@ export default function VotePage() {
     }
   }
 
-  if (!djData) return <p className="p-6">A carregar...</p>
+  if (!djData) return null
 
   return (
     <main className="min-h-screen bg-white flex items-center justify-center p-6">
@@ -107,20 +107,25 @@ export default function VotePage() {
       <div className="max-w-md w-full">
 
         {/* CARD */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="rounded-3xl overflow-hidden shadow-2xl border border-zinc-200">
 
-          {/* IMAGE */}
-          <div className="relative">
+          {/* IMAGE + GLOW */}
+          <div className="relative group">
             <img
               src={djData.image_url}
               className="w-full h-64 object-cover"
             />
 
-            <div className="absolute inset-0 bg-black/30 flex items-end p-4">
-              <h1 className="text-white text-2xl font-bold">
-                {djData.name}
-              </h1>
-            </div>
+            {/* NEON OVERLAY */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+
+            {/* GLOW */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500
+              bg-gradient-to-r from-fuchsia-500/30 to-cyan-500/30 blur-xl" />
+
+            <h1 className="absolute bottom-4 left-4 text-white text-2xl font-black tracking-wide">
+              {djData.name}
+            </h1>
           </div>
 
           {/* CONTENT */}
@@ -128,50 +133,68 @@ export default function VotePage() {
 
             {/* SUCCESS */}
             {success && (
-              <div className="bg-green-100 text-green-700 p-3 rounded-xl text-center font-bold">
-                ✅ Voto registado!
+              <div className="bg-green-500 text-white p-3 rounded-xl text-center font-bold animate-pulse">
+                ✅ VOTO REGISTADO
               </div>
             )}
 
             {/* LOADING */}
             {loading && (
-              <div className="text-center text-gray-500">
+              <div className="text-center text-gray-500 animate-pulse">
                 A registar voto...
               </div>
             )}
 
-            {/* BUTTONS */}
+            {/* BUTTON */}
             {!scanning ? (
               <button
                 onClick={startScanner}
                 className="w-full py-4 rounded-xl text-white font-bold text-lg
                 bg-gradient-to-r from-fuchsia-500 to-cyan-500
-                hover:scale-105 transition"
+                shadow-lg shadow-fuchsia-500/30
+                hover:scale-105 transition-all duration-300"
               >
-                📷 Votar com Scanner
+                📷 SCAN & VOTAR
               </button>
             ) : (
               <button
                 onClick={stopScanner}
                 className="w-full py-4 rounded-xl text-white font-bold bg-red-500"
               >
-                ❌ Parar Scanner
+                ❌ PARAR
               </button>
             )}
 
-            {/* SCANNER VIEW */}
-            <div
-              id="reader"
-              className={`w-full overflow-hidden rounded-xl ${
-                scanning ? 'block' : 'hidden'
-              }`}
-            />
+            {/* SCANNER BOX */}
+            <div className="relative">
+              <div
+                id="reader"
+                className={`w-full rounded-xl overflow-hidden ${
+                  scanning ? 'block' : 'hidden'
+                }`}
+              />
+
+              {/* LASER EFFECT */}
+              {scanning && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="w-full h-1 bg-red-500 animate-[scan_2s_linear_infinite]" />
+                </div>
+              )}
+            </div>
 
           </div>
 
         </div>
 
       </div>
+
+      {/* ANIMAÇÃO LASER */}
+      <style jsx>{`
+        @keyframes scan {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(250px); }
+        }
+      `}</style>
 
     </main>
   )
