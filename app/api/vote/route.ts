@@ -55,8 +55,8 @@ export async function POST(req: Request) {
       )
     }
 
-    // 🔥 CORREÇÃO AQUI
-    if (voteCode.is_used) {
+    // 🔥 USAR "used" (CORRIGIDO)
+    if (voteCode.used) {
       return NextResponse.json(
         { error: 'Código já utilizado' },
         { status: 400 }
@@ -95,16 +95,15 @@ export async function POST(req: Request) {
     const { error: codeError } = await supabaseAdmin
       .from('vote_codes')
       .update({
-        is_used: true,
-        voted_dj_slug: dj.name, // ou dj.slug se tiveres
+        used: true,
+        voted_dj_slug: dj.name,
         voted_at: new Date().toISOString(),
       })
       .eq('code', code)
 
     if (codeError) throw codeError
 
-    // ================= LOG =================
-    console.log('✅ VOTO REGISTADO:', { code, dj: dj.name, ip })
+    console.log('✅ VOTO REGISTADO:', { code, dj: dj.name })
 
     return NextResponse.json({ success: true })
 
