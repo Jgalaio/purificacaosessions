@@ -181,7 +181,7 @@ export default function PrintClient() {
         style={{
           width: '62mm',
           height: '29mm',
-          border: '1px solid black',
+          border: '0px solid black',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
