@@ -12,7 +12,7 @@ export default function PrintClient() {
   const [end, setEnd] = useState(100)
   const [onlyAvailable, setOnlyAvailable] = useState(true)
 
-  const [mode, setMode] = useState<'ticket' | 'a4-12' | 'a4-24'>('ticket')
+  const [mode, setMode] = useState<'ticket' | 'a4-12' | 'a4-24' | 'label-62x29'>('ticket')
 
   // ================= INIT =================
   useEffect(() => {
@@ -106,6 +106,7 @@ export default function PrintClient() {
           <option value="ticket">🧾 Talão térmico</option>
           <option value="a4-12">📄 A4 (3x4 - 12)</option>
           <option value="a4-24">📄 A4 (4x6 - 24)</option>
+          <option value="label-62x29">🏷️ Etiqueta 62x29mm</option>
         </select>
 
         <button
@@ -169,6 +170,59 @@ export default function PrintClient() {
         </div>
       )}
 
+
+      {/* ================= Label 62x29 ================= */}
+     {mode === 'label-62x29' && (
+  <div className="flex flex-col items-start">
+
+    {items.map((item, i) => (
+      <div
+        key={i}
+        style={{
+          width: '62mm',
+          height: '29mm',
+          border: '1px solid black',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '2mm',
+          boxSizing: 'border-box',
+        }}
+      >
+
+        {/* QR */}
+        <img
+          src={item.qr}
+          style={{
+            width: '24mm',
+            height: '24mm',
+          }}
+        />
+
+        {/* TEXTO */}
+        <div style={{ textAlign: 'center', flex: 1 }}>
+
+          <div style={{ fontSize: '6px' }}>
+            VOTA NO TEU DJ
+          </div>
+
+          <div style={{
+            fontSize: '10px',
+            fontWeight: 'bold',
+            letterSpacing: '1px'
+          }}>
+            {item.code}
+          </div>
+
+        </div>
+
+      </div>
+    ))}
+
+  </div>
+)}
+
+      
       {/* ================= A4 3x4 (12) ================= */}
       {mode === 'a4-12' && (
         <div>
